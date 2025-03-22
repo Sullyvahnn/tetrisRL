@@ -1,0 +1,25 @@
+    body, html {
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: #fff;
+      font-family: Arial, sans-serif;
+        width: 100%;
+    }
+
+    canvas {
+      background: #111;
+      border: 2px solid #555;
+    }
+
+    .score {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 20px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 8px;
+    }
