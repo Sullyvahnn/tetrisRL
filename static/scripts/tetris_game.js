@@ -20,12 +20,17 @@ const player = {
 };
 
 function sendGameUpdate() {
-    const gameState = getGameState();
     // console.log('Sending game state:', gameState);
-    socket.emit('game_update', gameState);
+    socket.emit('game_update', getGameState());
 }
+
+socket.on('visualise',async (data) => {
+  reload()
+  calculateCollision(data['x'], data['matrix'])
+
+});
 function getGameState() {
-  return { player_shape: player.matrix, arena_state: arena};
+  return { player_matrix: player.matrix, arena: arena};
 
 }
 function createMatrix(w, h) {
@@ -45,8 +50,14 @@ function createPiece(type) {
   if (type === 'S') return [[0,6,6],[6,6,0],[0,0,0]];
   if (type === 'Z') return [[7,7,0],[0,7,7],[0,0,0]];
 }
-function calculateCollision() {
-  let collider = structuredClone(player);
+function calculateCollision(x=null, matrix=null) {
+  let collider;
+  if(x !== null && matrix != null) {
+    collider = {
+  pos: { x: x, y: 0 },
+  matrix: matrix,
+};
+  } else collider = structuredClone(player);
   for(let y = 0; y<collider.matrix.length;y++) {
     for (let x = 0; x < collider.matrix[y].length; x++) {
     if (collider.matrix[x][y] !== 0) {
@@ -112,6 +123,7 @@ function collide(arena, player) {
 
 function playerDrop() {
   player.pos.y++;
+
   if (collide(arena, player)) {
     player.pos.y--;
     merge(arena, player);
@@ -188,8 +200,12 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawMatrix(arena, { x: 0, y: 0 });
   drawMatrix(player.matrix, player.pos);
+  drawPlayer();
 }
-
+function drawPlayer() {
+  ctx.fillStyle = 'orange';
+          ctx.fillRect((player.pos.x) * scale, (player.pos.y) * scale, scale, scale);
+}
 let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
@@ -200,11 +216,19 @@ function update(time = 0) {
   dropCounter += deltaTime;
   if (dropCounter > dropInterval) {
     playerDrop();
-    sendGameUpdate();
+    // sendGameUpdate();
+    reload();
   }
+  requestAnimationFrame(update);
+}
+function reload() {
   draw();
   calculateCollision();
-  requestAnimationFrame(update);
+}
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+function repeatVisualisation() {
+  sendGameUpdate();
 }
 
 document.addEventListener('keydown', event => {
@@ -219,7 +243,19 @@ document.addEventListener('keydown', event => {
   } else if (event.key === 'w') {
     playerRotate(1);
   }
-});
+  else if (event.key === 'r') {
+    playerReset()
+  }
+  else if(event.key === 'p') {
+    if(dropInterval === 1000000) dropInterval=1000;
+    else dropInterval = 1000000;
+  }
+  else if(event.key === 'q') {
+    repeatVisualisation();
+  }
 
-playerReset();
+  reload();
+});
 update();
+playerReset();
+reload();
